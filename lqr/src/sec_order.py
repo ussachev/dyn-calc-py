@@ -16,16 +16,16 @@ k2 = 1
 
 def system(x,t):
     dxdt = np.zeros_like(x)
-    
     dxdt[0]=x[1]
-    dxdt[1]=-x[0]*(k*k1-1/(T**2))-x[1]*(k*k2-2*ksi/T)
+    dxdt[1]=-x[0]*(k*k1+1/(T**2))-x[1]*(k*k2+2*ksi/T)
+    
     
     return dxdt
     
 
 def step(x,dt):
     x1_ = x[0] + x[1]*dt
-    x2_ = (x[0]*(k*k1 - 1/T**2)+x[1]*(k*k2-2*ksi/T))*dt+x[1]
+    x2_ = (-x[0]*(k*k1 + 1/T**2)-x[1]*(k*k2+2*ksi/T))*dt+x[1]
     return np.array([x1_,x2_])
 
 def update(intm,line_phase,line_time,x,t,dt):
