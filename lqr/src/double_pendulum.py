@@ -5,11 +5,9 @@ import matplotlib.animation as animation
 import scipy.integrate as integrate
 
 #Двойной маятник с пропорциональным регулятором
+m = np.array([0.5,0.1])
+l = np.array([1.1,2.2])
 
-m1 = 1.
-l1 = 1.
-m2 = 1.
-l2 = 1.
 g = 9.8
 k1 = 1
 k2 = 1
@@ -19,14 +17,22 @@ b2 = 10.
 qd = np.pi*(-120.)/180.
 
 
-def system(q,t):
+def system(q,t0,m,l):
     dqdt = np.zeros_like(q)
     #u =(qd -q[0])*80.0
-    u = 0.
+    u = np.array([0.0,0.0])
+    ml1 = m[1]*l[1]**2
+    m01l = (m[0]+m[1])*l[0]**2
+    ml01 = 2*m[1]*l[0]*l[1]*np.cos(q[1])
+    M_ = np.array([[ml1,-ml1-ml01],[-ml1-ml01,m01l+ml1+ml01]])/(ml1*(m01l+ml1+ml01)-(ml1+ml01)**2)
+    V = np.array([-m[1]*l[0]*l[1]*(2*q[2]*q[3]+q[3]**2)*np.sin(q[1]),np.sin(q[1])*m[1]*l[0]*l[1]*q[2]**2])
+    G = np.array([((m[0]+m[1])*g*l[0]*np.cos(q[0])+m[1]*g*l[1]*np.cos(q[0]+q[1])),m[1]*g*l[1]*np.cos(q[0]+q[1])])
+    M_V = np.dot(M_,V)
+    M_G = np.dot(M_,G)
     dqdt[0]=q[2]
     dqdt[1]=q[3]
-    dqdt[2]=(u-b*q[1]-m*g*l*np.sin(q[0]))/(m*l*2)
-    dqdt[3]=(u-b*q[1]-m*g*l*np.sin(q[0]))/(m*l*2)    
+    dqdt[2]=M_[0][0]*u[0]+M_[0][1]*u[1] - M_V[0] - M_G[0]
+    dqdt[3]=M_[1][0]*u[0]+M_[1][1]*u[1] - M_V[1] - M_G[1]    
     return dqdt
 
 
@@ -34,15 +40,15 @@ dt = 0.01
 t = np.arange(0.0,20.0,dt)
 q0 = np.array([0.,0.,0.,0.])
 
-q = integrate.odeint(system, q0, t)
+q = integrate.odeint(system, q0, t,args=(m,l))
 q = np.transpose(q)
 print len(t)
 print len(q[0])
 
-x1 = l1*np.sin(q[0])
-y1 = - l1*np.cos(q[0])
-x2 = x1+l2*np.sin(q[0]+q[1])
-y2 = y1-l2*np.cos(q[0]+q[1])
+x1 = l[0]*np.cos(q[0])
+y1 = l[0]*np.sin(q[0])
+x2 = x1+l[1]*np.cos(q[0]+q[1])
+y2 = y1+l[1]*np.sin(q[0]+q[1])
 
 fig = plt.figure()
 ax1 = fig.add_subplot(211)
