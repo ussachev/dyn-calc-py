@@ -5,8 +5,8 @@ import matplotlib.animation as animation
 import scipy.integrate as integrate
 
 #Двойной маятник с пропорциональным регулятором
-m = np.array([0.5,0.1])
-l = np.array([1.1,2.2])
+m = np.array([0.1,0.1])
+l = np.array([0.5,1.0])
 
 g = 9.8
 k1 = 1
@@ -21,12 +21,18 @@ def system(q,t0,m,l):
     dqdt = np.zeros_like(q)
     #u =(qd -q[0])*80.0
     u = np.array([0.0,0.0])
-    ml1 = m[1]*l[1]**2
+    ml1 = m[0]*l[0]**2
+    ml2 = m[1]*l[1]**2
     m01l = (m[0]+m[1])*l[0]**2
     ml01 = 2*m[1]*l[0]*l[1]*np.cos(q[1])
-    M_ = np.array([[ml1,-ml1-ml01],[-ml1-ml01,m01l+ml1+ml01]])/(ml1*(m01l+ml1+ml01)-(ml1+ml01)**2)
-    V = np.array([-m[1]*l[0]*l[1]*(2*q[2]*q[3]+q[3]**2)*np.sin(q[1]),np.sin(q[1])*m[1]*l[0]*l[1]*q[2]**2])
-    G = np.array([((m[0]+m[1])*g*l[0]*np.cos(q[0])+m[1]*g*l[1]*np.cos(q[0]+q[1])),m[1]*g*l[1]*np.cos(q[0]+q[1])])
+    M = np.array([[m01l+ml1+2*np.cos(q[1]), np.cos(q[1])*ml2],
+                  [np.cos(q[1])*ml2,        ml2]])
+    #M_ = np.array([[ml1,-ml1-ml01],[-ml1-ml01,m01l+ml1+ml01]])/(ml1*(m01l+ml1+ml01)-(ml1+ml01)**2)
+    M_ = np.linalg.inv(M)
+    V = np.array([-m[1]*l[0]*l[1]*(2*q[2]*q[3]+q[3]**2),
+                  np.sin(q[1])*m[1]*l[0]*l[1]*q[2]**2])
+    G = np.array([((m[0]+m[1])*g*l[0]*np.sin(q[0])+m[1]*g*l[1]*np.sin(q[0]+q[1])),
+                  m[1]*g*l[1]*np.sin(q[0]+q[1])])
     M_V = np.dot(M_,V)
     M_G = np.dot(M_,G)
     dqdt[0]=q[2]
@@ -38,23 +44,23 @@ def system(q,t0,m,l):
 
 dt = 0.01
 t = np.arange(0.0,20.0,dt)
-q0 = np.array([0.,0.,0.,0.])
+q0 = np.array([1.1,0.,0.,0.])
 
 q = integrate.odeint(system, q0, t,args=(m,l))
 q = np.transpose(q)
 print len(t)
 print len(q[0])
 
-x1 = l[0]*np.cos(q[0])
-y1 = l[0]*np.sin(q[0])
-x2 = x1+l[1]*np.cos(q[0]+q[1])
-y2 = y1+l[1]*np.sin(q[0]+q[1])
+x1 = -l[0]*np.sin(q[0])
+y1 = -l[0]*np.cos(q[0])
+x2 = x1-l[1]*np.sin(q[0]+q[1])
+y2 = y1-l[1]*np.cos(q[0]+q[1])
 
 fig = plt.figure()
 ax1 = fig.add_subplot(211)
 ax1.grid()
 ax1.set_aspect('equal', 'datalim')
-ax1.axis([-5,5,-2,2])
+ax1.axis([-6,6,-5,5])
 pend_line, = ax1.plot([],[],'o-',lw=2)
 ax2 = fig.add_subplot(212)
 ax2.set_aspect('equal', 'datalim')
